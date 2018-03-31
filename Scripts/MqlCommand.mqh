@@ -63,7 +63,67 @@ public:
         }
       return res;
      }
+	};
+
+class StatsCommand: public MqlCommand
+{
+	public:
+		RespValue        *call(const RespArray &command)
+		{
+      RespArray *res=new RespArray(2);
+      res.set(0,new RespString("Balance Credit Profit Equity Margin Free Level So-Call So-So"));
+			res.set(1,new RespString(StringFormat("%d %d %d %d %d %d %d %d %d",
+					AccountInfoDouble(ACCOUNT_BALANCE),
+					AccountInfoDouble(ACCOUNT_CREDIT),
+					AccountInfoDouble(ACCOUNT_PROFIT),
+					AccountInfoDouble(ACCOUNT_EQUITY),
+					AccountInfoDouble(ACCOUNT_MARGIN),
+					AccountInfoDouble(ACCOUNT_MARGIN_FREE),
+					AccountInfoDouble(ACCOUNT_MARGIN_LEVEL),
+					AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL),
+					AccountInfoDouble(ACCOUNT_MARGIN_SO_SO)
+          )));
+			return res;
+     }
   };
+
+class InfoCommand: public MqlCommand
+  {
+public:
+  RespValue        *call(const RespArray &command)
+    {
+      ENUM_ACCOUNT_STOPOUT_MODE stop_out_mode=(ENUM_ACCOUNT_STOPOUT_MODE)AccountInfoInteger(ACCOUNT_MARGIN_SO_MODE);
+	 	  ENUM_ACCOUNT_TRADE_MODE account_type=(ENUM_ACCOUNT_TRADE_MODE)AccountInfoInteger(ACCOUNT_TRADE_MODE);
+	 	  string trade_mode;
+	 	  switch(account_type)
+	 	  {
+	 	 	 case  ACCOUNT_TRADE_MODE_DEMO:
+	 	 		 trade_mode="demo";
+	 	 		 break;
+	 	 	 case  ACCOUNT_TRADE_MODE_CONTEST:
+	 	 		 trade_mode="contest";
+	 	 		 break;
+	 	 	 default:
+	 	 		 trade_mode="real";
+	 	 		 break;
+	 	  }
+
+      RespArray *res=new RespArray(2);
+      res.set(0,new RespString("Company Server Currency Trade-Mode Margin-So-Call Margin-So-So Stopout-Mode"));
+	 	  res.set(1,new RespString(StringFormat("%s %s %s %s %d %d %s",
+	 	 		 AccountInfoString(ACCOUNT_COMPANY),
+	 	 		 //AccountInfoString(ACCOUNT_NAME),
+	 	 		 AccountInfoString(ACCOUNT_SERVER),
+	 	 		 AccountInfoString(ACCOUNT_CURRENCY),
+	 	 		 trade_mode,
+	 	 		 AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL),
+	 	 		 AccountInfoDouble(ACCOUNT_MARGIN_SO_SO),
+	 	 		 (stop_out_mode==ACCOUNT_STOPOUT_MODE_PERCENT)?"percentage":"money"
+	 	 	 )));
+      return res;
+    }
+  };
+
 //+------------------------------------------------------------------+
 //| Buy at market price                                              |
 //| Syntax: BUY Symbol Lots                                          |
