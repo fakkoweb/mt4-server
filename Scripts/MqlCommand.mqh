@@ -65,24 +65,76 @@ public:
      }
 	};
 
+//+------------------------------------------------------------------+
+//| Give trade stats for account, in predefined output format.
+//| Syntax: STATS Format
+//| Valid formats are tab, csv and sh. The latter format should give
+//| values that can be evaluated as shell variables, or used with
+//| another, compatible scripting engine.
+//+------------------------------------------------------------------+
 class StatsCommand: public MqlCommand
 {
 	public:
 		RespValue        *call(const RespArray &command)
 		{
-      RespArray *res=new RespArray(2);
-      res.set(0,new RespString("Balance Credit Profit Equity Margin Free Level So-Call So-So"));
-			res.set(1,new RespString(StringFormat("%d %d %d %d %d %d %d %d %d",
-					AccountInfoDouble(ACCOUNT_BALANCE),
-					AccountInfoDouble(ACCOUNT_CREDIT),
-					AccountInfoDouble(ACCOUNT_PROFIT),
-					AccountInfoDouble(ACCOUNT_EQUITY),
-					AccountInfoDouble(ACCOUNT_MARGIN),
-					AccountInfoDouble(ACCOUNT_MARGIN_FREE),
-					AccountInfoDouble(ACCOUNT_MARGIN_LEVEL),
-					AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL),
-					AccountInfoDouble(ACCOUNT_MARGIN_SO_SO)
-          )));
+		  if (command.size() > 2) {
+		    return new RespError("Unexpected arguments for STATS");
+      }
+		  string output_format = "tab";
+		  if (command.size() == 2) {
+        output_format = dynamic_cast<RespBytes*>(command[1]).getValueAsString();
+      }
+		  StringToUpper(output_format);
+
+      RespArray *res;
+		  if (output_format == "TAB") {
+        res = new RespArray(2);
+        res.set(0,new RespString("Balance\tCredit\tProfit\tEquity\tMargin\tFree\tLevel\tSo-Call\tSo-So"));
+        res.set(1,new RespString(StringFormat("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d",
+              AccountInfoDouble(ACCOUNT_BALANCE),
+              AccountInfoDouble(ACCOUNT_CREDIT),
+              AccountInfoDouble(ACCOUNT_PROFIT),
+              AccountInfoDouble(ACCOUNT_EQUITY),
+              AccountInfoDouble(ACCOUNT_MARGIN),
+              AccountInfoDouble(ACCOUNT_MARGIN_FREE),
+              AccountInfoDouble(ACCOUNT_MARGIN_LEVEL),
+              AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL),
+              AccountInfoDouble(ACCOUNT_MARGIN_SO_SO)
+              )));
+
+      } else if (output_format == "CSV") {
+        res = new RespArray(2);
+          res.set(0,new RespString("# Balance,Credit,Profit,Equity,Margin,Free,Level,So-Call,So-So"));
+          res.set(1,new RespString(StringFormat("%d,%d,%d,%d,%d,%d,%d,%d,%d",
+              AccountInfoDouble(ACCOUNT_BALANCE),
+              AccountInfoDouble(ACCOUNT_CREDIT),
+              AccountInfoDouble(ACCOUNT_PROFIT),
+              AccountInfoDouble(ACCOUNT_EQUITY),
+              AccountInfoDouble(ACCOUNT_MARGIN),
+              AccountInfoDouble(ACCOUNT_MARGIN_FREE),
+              AccountInfoDouble(ACCOUNT_MARGIN_LEVEL),
+              AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL),
+              AccountInfoDouble(ACCOUNT_MARGIN_SO_SO)
+              )));
+
+      } else if (output_format == "SH") {
+        res = new RespArray(1);
+        res.set(0,new RespString(StringFormat(
+                  "balance=%d credit=%d profit=%d equity=%d margin=%d margin_free=%d margin_level=%d margin_so_call=%d margin_so_so=%d",
+              AccountInfoDouble(ACCOUNT_BALANCE),
+              AccountInfoDouble(ACCOUNT_CREDIT),
+              AccountInfoDouble(ACCOUNT_PROFIT),
+              AccountInfoDouble(ACCOUNT_EQUITY),
+              AccountInfoDouble(ACCOUNT_MARGIN),
+              AccountInfoDouble(ACCOUNT_MARGIN_FREE),
+              AccountInfoDouble(ACCOUNT_MARGIN_LEVEL),
+              AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL),
+              AccountInfoDouble(ACCOUNT_MARGIN_SO_SO)
+              )));
+
+      } else {
+        return new RespError("No such format");
+      }
 			return res;
      }
   };
@@ -92,34 +144,75 @@ class InfoCommand: public MqlCommand
 public:
   RespValue        *call(const RespArray &command)
     {
+		  if (command.size() > 2) {
+		    return new RespError("Unexpected arguments for INFO");
+      }
+		  string output_format = "tab";
+		  if (command.size() == 2) {
+        output_format = dynamic_cast<RespBytes*>(command[1]).getValueAsString();
+      }
+		  StringToUpper(output_format);
+
       ENUM_ACCOUNT_STOPOUT_MODE stop_out_mode=(ENUM_ACCOUNT_STOPOUT_MODE)AccountInfoInteger(ACCOUNT_MARGIN_SO_MODE);
 	 	  ENUM_ACCOUNT_TRADE_MODE account_type=(ENUM_ACCOUNT_TRADE_MODE)AccountInfoInteger(ACCOUNT_TRADE_MODE);
 	 	  string trade_mode;
-	 	  switch(account_type)
-	 	  {
-	 	 	 case  ACCOUNT_TRADE_MODE_DEMO:
-	 	 		 trade_mode="demo";
-	 	 		 break;
-	 	 	 case  ACCOUNT_TRADE_MODE_CONTEST:
-	 	 		 trade_mode="contest";
-	 	 		 break;
-	 	 	 default:
-	 	 		 trade_mode="real";
-	 	 		 break;
+	 	  switch(account_type) {
+	 	 	 case  ACCOUNT_TRADE_MODE_DEMO:    trade_mode = "demo"; break;
+	 	 	 case  ACCOUNT_TRADE_MODE_CONTEST: trade_mode = "contest"; break;
+	 	 	 default:                          trade_mode = "real"; break;
 	 	  }
 
-      RespArray *res=new RespArray(2);
-      res.set(0,new RespString("Company Server Currency Trade-Mode Margin-So-Call Margin-So-So Stopout-Mode"));
-	 	  res.set(1,new RespString(StringFormat("%s %s %s %s %d %d %s",
-	 	 		 AccountInfoString(ACCOUNT_COMPANY),
-	 	 		 //AccountInfoString(ACCOUNT_NAME),
-	 	 		 AccountInfoString(ACCOUNT_SERVER),
-	 	 		 AccountInfoString(ACCOUNT_CURRENCY),
-	 	 		 trade_mode,
-	 	 		 AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL),
-	 	 		 AccountInfoDouble(ACCOUNT_MARGIN_SO_SO),
-	 	 		 (stop_out_mode==ACCOUNT_STOPOUT_MODE_PERCENT)?"percentage":"money"
-	 	 	 )));
+      RespArray *res;
+		  if (output_format == "TAB") {
+        res = new RespArray(2);
+
+        res.set(0,new RespString("Account\tCompany\tServer\tCurrency\tTrade-Mode\tMargin-So-Call\tMargin-So-So\tStopout-Mode"));
+        res.set(1,new RespString(StringFormat("%i\t%s\t%s\t%s\t%s\t%d\t%d\t%s",
+           AccountInfoInteger(ACCOUNT_LOGIN),
+           AccountInfoString(ACCOUNT_COMPANY),
+           //AccountInfoString(ACCOUNT_NAME),
+           AccountInfoString(ACCOUNT_SERVER),
+           AccountInfoString(ACCOUNT_CURRENCY),
+           trade_mode,
+           AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL),
+           AccountInfoDouble(ACCOUNT_MARGIN_SO_SO),
+           (stop_out_mode==ACCOUNT_STOPOUT_MODE_PERCENT)?"percentage":"money"
+         )));
+
+      } else if (output_format == "CSV") {
+        res = new RespArray(2);
+
+        res.set(0,new RespString("# Account,Company,Server,Currency,Trade-Mode,Margin-So-Call,Margin-So-So,Stopout-Mode"));
+        res.set(1,new RespString(StringFormat("%d,%s,%s,%s,%s,%d,%d,%s",
+           AccountInfoInteger(ACCOUNT_LOGIN),
+           AccountInfoString(ACCOUNT_COMPANY),
+           //AccountInfoString(ACCOUNT_NAME),
+           AccountInfoString(ACCOUNT_SERVER),
+           AccountInfoString(ACCOUNT_CURRENCY),
+           trade_mode,
+           AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL),
+           AccountInfoDouble(ACCOUNT_MARGIN_SO_SO),
+           (stop_out_mode==ACCOUNT_STOPOUT_MODE_PERCENT)?"percentage":"money"
+         )));
+
+      } else if (output_format == "SH") {
+        res = new RespArray(1);
+
+        res.set(0,new RespString(StringFormat("account=%d company=%s server=%s currency=%s trade_mode=%s margin_so_call=%d margin_so_so=%d stopout_mode=%s",
+           AccountInfoInteger(ACCOUNT_LOGIN),
+           AccountInfoString(ACCOUNT_COMPANY),
+           //AccountInfoString(ACCOUNT_NAME),
+           AccountInfoString(ACCOUNT_SERVER),
+           AccountInfoString(ACCOUNT_CURRENCY),
+           trade_mode,
+           AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL),
+           AccountInfoDouble(ACCOUNT_MARGIN_SO_SO),
+           (stop_out_mode==ACCOUNT_STOPOUT_MODE_PERCENT)?"percentage":"money"
+         )));
+
+      } else {
+        return new RespError("No such format");
+      }
       return res;
     }
   };
