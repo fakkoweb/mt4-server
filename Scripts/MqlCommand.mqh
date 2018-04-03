@@ -89,47 +89,38 @@ class StatsCommand: public MqlCommand
       RespArray *res;
 		  if (output_format == "TAB") {
         res = new RespArray(2);
-        res.set(0,new RespString("Balance\tCredit\tProfit\tEquity\tMargin\tFree\tLevel\tSo-Call\tSo-So"));
-        res.set(1,new RespString(StringFormat("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d",
-              AccountInfoDouble(ACCOUNT_BALANCE),
-              AccountInfoDouble(ACCOUNT_CREDIT),
-              AccountInfoDouble(ACCOUNT_PROFIT),
-              AccountInfoDouble(ACCOUNT_EQUITY),
-              AccountInfoDouble(ACCOUNT_MARGIN),
-              AccountInfoDouble(ACCOUNT_MARGIN_FREE),
-              AccountInfoDouble(ACCOUNT_MARGIN_LEVEL),
-              AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL),
-              AccountInfoDouble(ACCOUNT_MARGIN_SO_SO)
+        res.set(0,new RespString("Balance\tCredit\tProfit\tEquity\tMargin\tFree"));
+        res.set(1,new RespString(StringFormat("%s\t%s\t%s\t%s\t%s\t%s",
+              DoubleToStr(AccountBalance(), 2),
+              DoubleToStr(AccountCredit(), 2),
+              DoubleToStr(AccountProfit(), 2),
+              DoubleToStr(AccountEquity(), 2),
+              DoubleToStr(AccountMargin(), 2),
+              DoubleToStr(AccountFreeMargin(), 2)
               )));
 
       } else if (output_format == "CSV") {
         res = new RespArray(2);
-          res.set(0,new RespString("# Balance,Credit,Profit,Equity,Margin,Free,Level,So-Call,So-So"));
-          res.set(1,new RespString(StringFormat("%d,%d,%d,%d,%d,%d,%d,%d,%d",
-              AccountInfoDouble(ACCOUNT_BALANCE),
-              AccountInfoDouble(ACCOUNT_CREDIT),
-              AccountInfoDouble(ACCOUNT_PROFIT),
-              AccountInfoDouble(ACCOUNT_EQUITY),
-              AccountInfoDouble(ACCOUNT_MARGIN),
-              AccountInfoDouble(ACCOUNT_MARGIN_FREE),
-              AccountInfoDouble(ACCOUNT_MARGIN_LEVEL),
-              AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL),
-              AccountInfoDouble(ACCOUNT_MARGIN_SO_SO)
+        res.set(0,new RespString("# Balance,Credit,Profit,Equity,Margin,Free"));
+        res.set(1,new RespString(StringFormat("%s,%s,%s,%s,%s,%s",
+              DoubleToStr(AccountBalance(), 2),
+              DoubleToStr(AccountCredit(), 2),
+              DoubleToStr(AccountProfit(), 2),
+              DoubleToStr(AccountEquity(), 2),
+              DoubleToStr(AccountMargin(), 2),
+              DoubleToStr(AccountFreeMargin(), 2)
               )));
 
       } else if (output_format == "SH") {
         res = new RespArray(1);
         res.set(0,new RespString(StringFormat(
-                  "balance=%d credit=%d profit=%d equity=%d margin=%d margin_free=%d margin_level=%d margin_so_call=%d margin_so_so=%d",
-              AccountInfoDouble(ACCOUNT_BALANCE),
-              AccountInfoDouble(ACCOUNT_CREDIT),
-              AccountInfoDouble(ACCOUNT_PROFIT),
-              AccountInfoDouble(ACCOUNT_EQUITY),
-              AccountInfoDouble(ACCOUNT_MARGIN),
-              AccountInfoDouble(ACCOUNT_MARGIN_FREE),
-              AccountInfoDouble(ACCOUNT_MARGIN_LEVEL),
-              AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL),
-              AccountInfoDouble(ACCOUNT_MARGIN_SO_SO)
+                  "balance=%s credit=%s profit=%s equity=%s margin=%s margin_free=%s",
+              DoubleToStr(AccountBalance(), 2),
+              DoubleToStr(AccountCredit(), 2),
+              DoubleToStr(AccountProfit(), 2),
+              DoubleToStr(AccountEquity(), 2),
+              DoubleToStr(AccountMargin(), 2),
+              DoubleToStr(AccountFreeMargin(), 2)
               )));
 
       } else {
@@ -167,15 +158,15 @@ public:
         res = new RespArray(2);
 
         res.set(0,new RespString("Account\tCompany\tServer\tCurrency\tTrade-Mode\tMargin-So-Call\tMargin-So-So\tStopout-Mode"));
-        res.set(1,new RespString(StringFormat("%i\t%s\t%s\t%s\t%s\t%d\t%d\t%s",
+        res.set(1,new RespString(StringFormat("%i\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
            AccountInfoInteger(ACCOUNT_LOGIN),
            AccountInfoString(ACCOUNT_COMPANY),
            //AccountInfoString(ACCOUNT_NAME),
            AccountInfoString(ACCOUNT_SERVER),
            AccountInfoString(ACCOUNT_CURRENCY),
            trade_mode,
-           AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL),
-           AccountInfoDouble(ACCOUNT_MARGIN_SO_SO),
+           DoubleToStr(AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL)),
+           DoubleToStr(AccountInfoDouble(ACCOUNT_MARGIN_SO_SO)),
            (stop_out_mode==ACCOUNT_STOPOUT_MODE_PERCENT)?"percentage":"money"
          )));
 
@@ -183,30 +174,30 @@ public:
         res = new RespArray(2);
 
         res.set(0,new RespString("# Account,Company,Server,Currency,Trade-Mode,Margin-So-Call,Margin-So-So,Stopout-Mode"));
-        res.set(1,new RespString(StringFormat("%d,%s,%s,%s,%s,%d,%d,%s",
+        res.set(1,new RespString(StringFormat("%i,%s,%s,%s,%s,%s,%s,%s",
            AccountInfoInteger(ACCOUNT_LOGIN),
            AccountInfoString(ACCOUNT_COMPANY),
            //AccountInfoString(ACCOUNT_NAME),
            AccountInfoString(ACCOUNT_SERVER),
            AccountInfoString(ACCOUNT_CURRENCY),
            trade_mode,
-           AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL),
-           AccountInfoDouble(ACCOUNT_MARGIN_SO_SO),
+           DoubleToStr(AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL)),
+           DoubleToStr(AccountInfoDouble(ACCOUNT_MARGIN_SO_SO)),
            (stop_out_mode==ACCOUNT_STOPOUT_MODE_PERCENT)?"percentage":"money"
          )));
 
       } else if (output_format == "SH") {
         res = new RespArray(1);
 
-        res.set(0,new RespString(StringFormat("account=%d company=%s server=%s currency=%s trade_mode=%s margin_so_call=%d margin_so_so=%d stopout_mode=%s",
+        res.set(0,new RespString(StringFormat("account=%i company=\"%s\" server=\"%s\" currency='%s' trade_mode='%s' margin_so_call=%s margin_so_so=%s stopout_mode=%s",
            AccountInfoInteger(ACCOUNT_LOGIN),
            AccountInfoString(ACCOUNT_COMPANY),
            //AccountInfoString(ACCOUNT_NAME),
            AccountInfoString(ACCOUNT_SERVER),
            AccountInfoString(ACCOUNT_CURRENCY),
            trade_mode,
-           AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL),
-           AccountInfoDouble(ACCOUNT_MARGIN_SO_SO),
+           DoubleToStr(AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL)),
+           DoubleToStr(AccountInfoDouble(ACCOUNT_MARGIN_SO_SO)),
            (stop_out_mode==ACCOUNT_STOPOUT_MODE_PERCENT)?"percentage":"money"
          )));
 
