@@ -49,7 +49,7 @@ public:
       int total=m_pool.total();
       if(total==0) return RespNil::getInstance();
       RespArray *res=new RespArray(total);
-      for(int i=0; i<total;i++)
+      for (int i=0; i<total;i++)
         {
          if(m_pool.select(i))
            {
@@ -127,7 +127,7 @@ class StatsCommand: public MqlCommand
         return new RespError("No such format");
       }
 			return res;
-     }
+    }
   };
 
 class InfoCommand: public MqlCommand
@@ -203,6 +203,46 @@ public:
 
       } else {
         return new RespError("No such format");
+      }
+      return res;
+    }
+  };
+
+//+------------------------------------------------------------------+
+//| Return latest tick data for markets
+//| Syntax: TICKS Format Markets...
+//+------------------------------------------------------------------+
+class MarketTickCommand: public MqlCommand
+  {
+public:
+		RespValue        *call(const RespArray &command)
+		{
+		  int total = command.size();
+		  if (total < 2) {
+		    return new RespError("Illegal arguments for TICKS");
+      }
+		  string output_format = "sh";
+      output_format = dynamic_cast<RespBytes*>(command[1]).getValueAsString();
+		  StringToUpper(output_format);
+
+      MqlTick last_tick;
+      string market;
+		  RespArray *res = new RespArray(total-2);
+      for (int i=2; i<total;i++) {
+        market = dynamic_cast<RespBytes*>(command[i]).getValueAsString();
+        if (!SymbolInfoTick(market, last_tick))
+        {
+          return new RespError(StringFormat("SymbolInfoTickError: %s: %s", market,
+            GetLastError()));
+        }
+
+        res.set(i-2, new RespString(StringFormat("symbol='%s' time='%s' bid=%s ask=%s volume=%s", 
+              market,
+              TimeToString(last_tick.time),
+              DoubleToString(last_tick.bid),
+              DoubleToString(last_tick.ask),
+              DoubleToString(last_tick.volume)
+          )));
       }
       return res;
     }

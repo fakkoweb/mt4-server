@@ -64,5 +64,6 @@ TradeCommandProcessor::TradeCommandProcessor(void)
    m_commands.set("QUIT",new QuitCommand);
    m_commands.set("INFO",new InfoCommand);
    m_commands.set("STATS",new StatsCommand);
+   m_commands.set("TICKS",new MarketTickCommand);
   }
 //+------------------------------------------------------------------+

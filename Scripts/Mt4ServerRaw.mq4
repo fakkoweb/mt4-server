@@ -39,7 +39,6 @@ private:
 public:
                      TcpClient(ZmqMsg &msg)
      {
-      PrintFormat(">>> Debug: client id is %d bytes",msg.size());
       msg.getData(m_id);
      }
    bool              equals(const TcpClient *client) const
@@ -99,7 +98,7 @@ public:
      {
       if(!m_socket.bind(m_address))
         {
-         fail(StringFormat(">>> Error binding to %s: %s",m_address,Zmq::errorMessage(Zmq::errorNumber())));
+         fail(StringFormat("MT4-Server Error binding to %s: %s",m_address,Zmq::errorMessage(Zmq::errorNumber())));
          return;
         }
       m_socket.setStreamNotify(true); // notify connect/disconnect
@@ -124,14 +123,14 @@ void Mt4ServerRaw::main()
       int ret=Socket::poll(items,500);
       if(ret==-1)
         {
-         Print(">>> Polling input failed: ",Zmq::errorMessage(Zmq::errorNumber()));
+         Print("MT4-Server Polling input failed: ",Zmq::errorMessage(Zmq::errorNumber()));
          continue;
         }
       if(!items[0].hasInput()) continue;
 
       if(!m_socket.recv(id))
         {
-         Print(">>> Failed retrieve client id: ",Zmq::errorMessage(Zmq::errorNumber()));
+         Print("MT4-Server Failed retrieve client id: ",Zmq::errorMessage(Zmq::errorNumber()));
          continue;
         }
 
@@ -140,11 +139,11 @@ void Mt4ServerRaw::main()
 
       if(!m_clients.contains(client))
         {
-         Print(">>> New client from ",id.meta("Peer-Address"));
+         Print("MT4-Server New client from ",id.meta("Peer-Address"));
 
          if(!m_socket.recv(request))
            {
-            Print(">>> Failed receive connection: ",Zmq::errorMessage(Zmq::errorNumber()));
+            Print("MT4-Server Failed receive connection: ",Zmq::errorMessage(Zmq::errorNumber()));
            }
          else
            {
@@ -158,7 +157,7 @@ void Mt4ServerRaw::main()
          parser=m_clients[client];
          if(!m_socket.recv(request))
            {
-            Print(">>> Failed receive request: ",Zmq::errorMessage(Zmq::errorNumber()));
+            Print("MT4-Server Failed receive request: ",Zmq::errorMessage(Zmq::errorNumber()));
             m_clients.remove(client);
             SafeDelete(client);
             continue;
@@ -185,20 +184,20 @@ void Mt4ServerRaw::main()
          if(parser.getError()!=RespParseErrorNeedMoreInput)
            {
             string error=EnumToString(parser.getError());
-            Print(">>> Error parsing command: ",error);
+            Print("MT4-Server Error parsing command: ",error);
             reply=new RespError(error);
            }
          else continue;
         }
       else if(command.getType()!=RespTypeArray)
         {
-         Print(">>> Invalid command: ","Command is not a RespArray");
+         Print("MT4-Server Invalid command: ","Command is not a RespArray");
          reply=new RespError("Command is not a RespArray");
         }
       else
         {
          RespArray *c=dynamic_cast<RespArray*>(command);
-         Print(">>> Received command: ",c.toString());
+         Print("MT4-Server Received command: ",c.toString());
          reply=m_processor.process(c);
         }
 
@@ -219,7 +218,7 @@ void Mt4ServerRaw::main()
 
       if(!m_socket.sendMore(id) || !m_socket.send(response))
         {
-         Alert(StringFormat(">>> Critical error: failed to send response to client!!! (%s)",
+         Alert(StringFormat("MT4-Server Critical error: failed to send response to client!!! (%s)",
                Zmq::errorMessage(Zmq::errorNumber())
                ));
         }
