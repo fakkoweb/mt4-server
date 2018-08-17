@@ -305,6 +305,44 @@ public:
      }
   };
 //+------------------------------------------------------------------+
+//| Edit a market order                                              |
+//| Syntax: EDIT Ticket Entry SL TP                                  |
+//| Results:                                                         |
+//|   Success: Order id (RespInteger)                                |
+//|   Fail:    RespError                                             |
+//+------------------------------------------------------------------+
+class EditCommand: public MqlCommand
+{
+public:
+   RespValue   *call(const RespArray &command)
+   {
+      if(command.size()!=5) return new RespError("Invalid number of arguments for command EDIT! Use 0 on arguments you do not want to change.");
+      int ticket=(int)StringToInteger(dynamic_cast<RespBytes*>(command[1]).getValueAsString());
+      if(!Order::Select(ticket))
+      {
+         return new RespError("Order does not exist!");
+      }
+
+      double entry = StringToDouble(dynamic_cast<RespBytes*>(command[2]).getValueAsString());
+      if (entry <=0) entry = OrderOpenPrice();
+      double stoploss = StringToDouble(dynamic_cast<RespBytes*>(command[3]).getValueAsString());
+      if (stoploss <=0) stoploss = OrderStopLoss();
+      double takeprofit = StringToDouble(dynamic_cast<RespBytes*>(command[4]).getValueAsString());
+      if (takeprofit <=0) takeprofit = OrderTakeProfit();
+
+      if(!OrderModify(OrderTicket(), entry, stoploss, takeprofit, 0))
+      {
+         int ec=Mql::getLastError();
+         return new RespError(StringFormat("Failed to edit market order #%d with error id (%d): %s",
+                              ticket,ec,Mql::getErrorMessage(ec)));
+      }
+      else
+      {
+         return new RespString("Ok");
+      }
+   }
+};
+//+------------------------------------------------------------------+
 //| Close a market order                                             |
 //| Syntax: CLOSE Ticket Lots                                        |
 //| Results:                                                         |
