@@ -24,6 +24,49 @@
 #include <Mql/Trade/Account.mqh>
 #include <Mql/Trade/Order.mqh>
 #include <Mql/Format/Resp.mqh>
+
+int ParseOrderType(const string& direction, const string& type)
+{
+   string directionUpper = direction;
+   string typeUpper = type;
+   
+   if(!StringToUpper(directionUpper) || !StringToUpper(typeUpper))
+      return -1;
+   
+   if (directionUpper=="BUY")
+   {
+      if (typeUpper=="MARKET")
+      {
+         return OP_BUY;
+      }
+      else if (typeUpper=="STOP")
+      {
+         return OP_BUYSTOP;
+      }
+      else if (typeUpper=="LIMIT")
+      {
+         return OP_BUYLIMIT;
+      }
+   }
+   else if (directionUpper=="SELL")
+   {
+      if (typeUpper=="MARKET")
+      {
+         return OP_SELL;
+      }
+      else if (typeUpper=="STOP")
+      {
+         return OP_SELLSTOP;
+      }
+      else if (typeUpper=="LIMIT")
+      {
+         return OP_SELLLIMIT;
+      }
+   }
+   
+   return -1;
+}
+
 //+------------------------------------------------------------------+
 //| Wraps a specific MQL command                                     |
 //+------------------------------------------------------------------+
@@ -250,7 +293,7 @@ public:
 
 //+------------------------------------------------------------------+
 //| Buy at market price                                              |
-//| Syntax: BUY Symbol Lots                                          |
+//| Syntax: BUY Type Symbol Lots Entry SL TP                         |
 //| Results:                                                         |
 //|   Success: Order id (RespInteger)                                |
 //|   Fail:    RespError                                             |
@@ -260,10 +303,29 @@ class BuyCommand: public MqlCommand
 public:
    RespValue        *call(const RespArray &command)
      {
-      if(command.size()!=3) return new RespError("Invalid number of arguments for command BUY!");
-      string symbol=dynamic_cast<RespBytes*>(command[1]).getValueAsString();
-      double lots=StringToDouble(dynamic_cast<RespBytes*>(command[2]).getValueAsString());
-      int id=OrderSend(symbol,OP_BUY,lots,FxSymbol::getAsk(symbol),3,0,0,NULL,0,0,clrNONE);
+      if(command.size()<4 || command.size()>7) return new RespError("Invalid number of arguments for command BUY!");
+      string direction = "buy";
+      string type  =dynamic_cast<RespBytes*>(command[1]).getValueAsString();
+      string symbol=dynamic_cast<RespBytes*>(command[2]).getValueAsString();
+      double lots=StringToDouble(dynamic_cast<RespBytes*>(command[3]).getValueAsString());
+      double entry=0;
+      double stoploss=0;
+      double takeprofit=0;
+      int ordertype = ParseOrderType(direction,type);
+      if(command.size()>4)
+      {
+         if(ordertype==OP_BUY)
+            // input entry is ignored if this is a market order
+            entry=FxSymbol::getAsk(symbol);
+         else
+            entry=StringToDouble(dynamic_cast<RespBytes*>(command[4]).getValueAsString());
+      }
+      if(command.size()>5)
+         stoploss=StringToDouble(dynamic_cast<RespBytes*>(command[5]).getValueAsString());
+      if(command.size()>6)
+         takeprofit=StringToDouble(dynamic_cast<RespBytes*>(command[6]).getValueAsString());
+      //int id=OrderSend(symbol,ordertype,lots,FxSymbol::getAsk(symbol),3,0,0,NULL,0,0,clrNONE);
+      int id=OrderSend(symbol,ordertype,lots,entry,3,stoploss,takeprofit,NULL,0,0,clrNONE);
       if(id==-1)
         {
          int ec=Mql::getLastError();
@@ -278,7 +340,7 @@ public:
   };
 //+------------------------------------------------------------------+
 //| Sell at market price                                             |
-//| Syntax: SELL Symbol Lots                                         |
+//| Syntax: SELL Type Symbol Lots Entry SL TP                        |
 //| Results:                                                         |
 //|   Success: Order id (RespInteger)                                |
 //|   Fail:    RespError                                             |
@@ -288,10 +350,29 @@ class SellCommand: public MqlCommand
 public:
    RespValue        *call(const RespArray &command)
      {
-      if(command.size()!=3) return new RespError("Invalid number of arguments for command SELL!");
-      string symbol=dynamic_cast<RespBytes*>(command[1]).getValueAsString();
-      double lots=StringToDouble(dynamic_cast<RespBytes*>(command[2]).getValueAsString());
-      int id=OrderSend(symbol,OP_SELL,lots,FxSymbol::getBid(symbol),3,0,0,NULL,0,0,clrNONE);
+      if(command.size()<4 || command.size()>7) return new RespError("Invalid number of arguments for command SELL!");
+      string direction = "sell";
+      string type  =dynamic_cast<RespBytes*>(command[1]).getValueAsString();
+      string symbol=dynamic_cast<RespBytes*>(command[2]).getValueAsString();
+      double lots=StringToDouble(dynamic_cast<RespBytes*>(command[3]).getValueAsString());
+      double entry = 0;
+      double stoploss = 0;
+      double takeprofit = 0;
+      int ordertype = ParseOrderType(direction,type);
+      if(command.size()>4)
+      {
+         if(ordertype==OP_SELL)
+            // input entry is ignored if this is a market order
+            entry=FxSymbol::getBid(symbol);
+         else
+            entry=StringToDouble(dynamic_cast<RespBytes*>(command[4]).getValueAsString());
+      }
+      if(command.size()>5)
+         stoploss=StringToDouble(dynamic_cast<RespBytes*>(command[5]).getValueAsString());
+      if(command.size()>6)
+         takeprofit=StringToDouble(dynamic_cast<RespBytes*>(command[6]).getValueAsString());
+      //int id=OrderSend(symbol,ordertype,lots,FxSymbol::getBid(symbol),3,0,0,NULL,0,0,clrNONE);
+      int id=OrderSend(symbol,ordertype,lots,entry,3,stoploss,takeprofit,NULL,0,0,clrNONE);
       if(id==-1)
         {
          int ec=Mql::getLastError();
