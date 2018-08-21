@@ -370,6 +370,7 @@ public:
       else
         {
          lots=StringToDouble(dynamic_cast<RespBytes*>(command[2]).getValueAsString());
+         if(lots<=0) lots=Order::Lots();
         }
       if(!OrderClose(ticket,lots,FxSymbol::priceForClose(symbol,op),3,clrNONE))
         {
