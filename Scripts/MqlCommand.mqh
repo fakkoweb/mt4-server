@@ -334,7 +334,16 @@ public:
         }
       else
         {
-         return new RespInteger(id);
+         // An array of (ticket, entryPrice) is returned
+         // When entering at market, one may get (usually does) a different price from what expected.
+         // This provides an immediate feedback, removing the need to ask server this information a second time.
+         RespArray *result=new RespArray(2);
+         result.set(0,new RespInteger(id));
+         if(!Order::Select(id))
+            // This should NEVER happen
+            return new RespError(StringFormat("Order was signaled as inserted with id (%d) but does not exist in open orders? WTF",id));
+         result.set(1,new RespString(Order::F(Order::OpenPrice())));
+         return result;
         }
      }
   };
@@ -381,7 +390,16 @@ public:
         }
       else
         {
-         return new RespInteger(id);
+         // An array of (ticket, entryPrice) is returned
+         // When entering at market, one may get (usually does) a different price from what expected.
+         // This provides an immediate feedback, removing the need to ask server this information a second time.
+         RespArray *result=new RespArray(2);
+         result.set(0,new RespInteger(id));
+         if(!Order::Select(id))
+            // This should NEVER happen
+            return new RespError(StringFormat("Order was signaled as inserted with id (%d) but does not exist in open orders? WTF",id));
+         result.set(1,new RespString(Order::F(Order::OpenPrice())));
+         return result;
         }
      }
   };
